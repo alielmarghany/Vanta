@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VANTA — The Infrastructure Layer for Human Longevity</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Mono:wght@300;400;500&family=Instrument+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black: #080808;
+    --white: #f5f0e8;
+    --cream: #ede8dc;
+    --gold: #c9a84c;
+    --gold-light: #e8c96a;
+    --red: #c0392b;
+    --green: #2ecc71;
+    --text-dim: #6b6558;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--black);
+    color: var(--white);
+    font-family: 'Instrument Sans', sans-serif;
+    font-weight: 300;
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* Custom cursor */
+  .cursor {
+    position: fixed;
+    width: 8px;
+    height: 8px;
+    background: var(--gold);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    transition: width 0.2s, height 0.2s, background 0.2s;
+  }
+  .cursor-ring {
+    position: fixed;
+    width: 36px;
+    height: 36px;
+    border: 1px solid rgba(201,168,76,0.4);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9998;
+    transform: translate(-50%, -50%);
+    transition: all 0.12s ease-out;
+  }
+  body:hover .cursor { opacity: 1; }
+
+  /* Noise overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 9997;
+    opacity: 0.5;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    padding: 28px 60px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 100;
+    border-bottom: 1px solid rgba(201,168,76,0.08);
+    background: rgba(8,8,8,0.85);
+    backdrop-filter: blur(20px);
+  }
+  .nav-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 6px;
+    color: var(--gold);
+  }
+  .nav-links { display: flex; gap: 40px; }
+  .nav-links a {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    text-decoration: none;
+    text-transform: uppercase;
+    transition: color 0.3s;
+  }
+  .nav-links a:hover { color: var(--white); }
+  .nav-cta {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--gold);
+    border: 1px solid var(--gold);
+    padding: 10px 24px;
+    text-decoration: none;
+    text-transform: uppercase;
+    transition: all 0.3s;
+  }
+  .nav-cta:hover { background: var(--gold); color: var(--black); }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 120px 60px 80px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-grid {
+    position: absolute;
+    inset: 0;
+    background-image: 
+      linear-gradient(rgba(201,168,76,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(201,168,76,0.04) 1px, transparent 1px);
+    background-size: 80px 80px;
+    animation: grid-drift 30s linear infinite;
+  }
+  @keyframes grid-drift {
+    from { transform: translateY(0); }
+    to { transform: translateY(80px); }
+  }
+
+  .hero-orb {
+    position: absolute;
+    width: 700px;
+    height: 700px;
+    right: -200px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: radial-gradient(circle, rgba(201,168,76,0.12) 0%, rgba(201,168,76,0.04) 40%, transparent 70%);
+    border-radius: 50%;
+    animation: pulse 6s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: translateY(-50%) scale(1); opacity: 1; }
+    50% { transform: translateY(-50%) scale(1.05); opacity: 0.8; }
+  }
+
+  .hero-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 36px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    opacity: 0;
+    animation: fade-up 0.8s ease forwards 0.2s;
+  }
+  .hero-tag::before {
+    content: '';
+    width: 40px;
+    height: 1px;
+    background: var(--gold);
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(52px, 8vw, 110px);
+    font-weight: 900;
+    line-height: 0.92;
+    letter-spacing: -2px;
+    max-width: 800px;
+    margin-bottom: 48px;
+    opacity: 0;
+    animation: fade-up 0.8s ease forwards 0.4s;
+  }
+  h1 em {
+    font-style: italic;
+    color: var(--gold);
+  }
+
+  .hero-sub {
+    max-width: 520px;
+    font-size: 16px;
+    line-height: 1.8;
+    color: rgba(245,240,232,0.6);
+    margin-bottom: 60px;
+    opacity: 0;
+    animation: fade-up 0.8s ease forwards 0.6s;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    opacity: 0;
+    animation: fade-up 0.8s ease forwards 0.8s;
+  }
+
+  .btn-primary {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    background: var(--gold);
+    color: var(--black);
+    padding: 18px 40px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-primary::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--gold-light);
+    transform: translateX(-100%);
+    transition: transform 0.3s;
+  }
+  .btn-primary:hover::after { transform: translateX(0); }
+  .btn-primary span { position: relative; z-index: 1; }
+
+  .btn-ghost {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: color 0.3s;
+  }
+  .btn-ghost:hover { color: var(--white); }
+  .btn-ghost::after {
+    content: '→';
+    transition: transform 0.3s;
+  }
+  .btn-ghost:hover::after { transform: translateX(4px); }
+
+  .hero-stats {
+    position: absolute;
+    bottom: 60px;
+    right: 60px;
+    display: flex;
+    gap: 60px;
+    opacity: 0;
+    animation: fade-up 0.8s ease forwards 1s;
+  }
+  .stat-item { text-align: right; }
+  .stat-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--gold);
+    display: block;
+  }
+  .stat-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+  }
+
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* TICKER */
+  .ticker {
+    border-top: 1px solid rgba(201,168,76,0.15);
+    border-bottom: 1px solid rgba(201,168,76,0.15);
+    padding: 16px 0;
+    overflow: hidden;
+    background: rgba(201,168,76,0.03);
+  }
+  .ticker-track {
+    display: flex;
+    gap: 0;
+    animation: ticker 30s linear infinite;
+    white-space: nowrap;
+  }
+  .ticker-item {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    padding: 0 40px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .ticker-item .dot {
+    width: 4px;
+    height: 4px;
+    background: var(--gold);
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  @keyframes ticker {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  /* PROBLEM SECTION */
+  .section {
+    padding: 140px 60px;
+    position: relative;
+  }
+
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 4px;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-label::before {
+    content: '';
+    width: 24px;
+    height: 1px;
+    background: var(--gold);
+  }
+
+  h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(36px, 5vw, 68px);
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -1px;
+    margin-bottom: 32px;
+  }
+  h2 em { font-style: italic; color: var(--gold); }
+
+  .problem-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+    margin-top: 80px;
+  }
+  .problem-card {
+    background: rgba(245,240,232,0.02);
+    border: 1px solid rgba(245,240,232,0.06);
+    padding: 50px;
+    position: relative;
+    transition: background 0.3s;
+  }
+  .problem-card:hover {
+    background: rgba(201,168,76,0.04);
+    border-color: rgba(201,168,76,0.2);
+  }
+  .problem-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 80px;
+    font-weight: 900;
+    color: rgba(201,168,76,0.1);
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    line-height: 1;
+  }
+  .problem-card h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 26px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    line-height: 1.2;
+  }
+  .problem-card p {
+    font-size: 15px;
+    color: rgba(245,240,232,0.55);
+    line-height: 1.8;
+  }
+
+  /* SOLUTION */
+  .solution {
+    background: var(--white);
+    color: var(--black);
+  }
+  .solution .section-label { color: var(--red); }
+  .solution .section-label::before { background: var(--red); }
+  .solution h2 { color: var(--black); }
+  .solution h2 em { color: var(--red); font-style: italic; }
+
+  .solution-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 100px;
+    align-items: center;
+    margin-top: 80px;
+  }
+
+  .solution-visual {
+    position: relative;
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px solid;
+    animation: rotate linear infinite;
+  }
+  .ring-1 { width: 200px; height: 200px; border-color: rgba(192,57,43,0.3); animation-duration: 20s; }
+  .ring-2 { width: 320px; height: 320px; border-color: rgba(201,168,76,0.2); animation-duration: 35s; animation-direction: reverse; }
+  .ring-3 { width: 440px; height: 440px; border-color: rgba(8,8,8,0.15); animation-duration: 50s; }
+
+  .ring::after {
+    content: '';
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: var(--gold);
+    border-radius: 50%;
+    top: -4px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  .ring-2::after { background: var(--red); }
+  .ring-3::after { background: var(--black); }
+
+  @keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .ring-center {
+    width: 100px;
+    height: 100px;
+    background: var(--black);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+  }
+  .ring-center span {
+    font-family: 'Playfair Display', serif;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--gold);
+    text-align: center;
+    text-transform: uppercase;
+  }
+
+  .solution-features { display: flex; flex-direction: column; gap: 32px; }
+  .feature-item {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+    padding: 28px 0;
+    border-bottom: 1px solid rgba(8,8,8,0.08);
+  }
+  .feature-icon {
+    width: 44px;
+    height: 44px;
+    background: var(--black);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 18px;
+  }
+  .feature-item h4 {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    color: var(--black);
+  }
+  .feature-item p { font-size: 14px; color: rgba(8,8,8,0.55); line-height: 1.7; }
+
+  /* MARKET */
+  .market-numbers {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+    margin-top: 80px;
+  }
+  .market-card {
+    padding: 60px 50px;
+    border: 1px solid rgba(201,168,76,0.1);
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s;
+  }
+  .market-card:hover { border-color: rgba(201,168,76,0.4); }
+  .market-card::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--gold), transparent);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.4s;
+  }
+  .market-card:hover::before { transform: scaleX(1); }
+  .market-val {
+    font-family: 'Playfair Display', serif;
+    font-size: 56px;
+    font-weight: 900;
+    color: var(--gold);
+    display: block;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+  .market-desc { font-size: 14px; color: rgba(245,240,232,0.5); line-height: 1.7; margin-top: 12px; }
+  .market-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+  }
+
+  /* TEAM */
+  .team-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2px;
+    margin-top: 80px;
+  }
+  .team-card {
+    border: 1px solid rgba(245,240,232,0.06);
+    padding: 40px 36px;
+    transition: all 0.3s;
+  }
+  .team-card:hover {
+    background: rgba(201,168,76,0.04);
+    border-color: rgba(201,168,76,0.2);
+  }
+  .team-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold) 0%, rgba(201,168,76,0.3) 100%);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--black);
+  }
+  .team-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .team-role {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .team-bio { font-size: 13px; color: rgba(245,240,232,0.45); line-height: 1.7; }
+
+  /* TRACTION */
+  .traction-bar-wrap { margin-top: 80px; }
+  .bar-row {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    margin-bottom: 24px;
+  }
+  .bar-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    width: 200px;
+    text-transform: uppercase;
+  }
+  .bar-outer {
+    flex: 1;
+    height: 3px;
+    background: rgba(245,240,232,0.06);
+    position: relative;
+  }
+  .bar-inner {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold), var(--gold-light));
+    transform-origin: left;
+    animation: bar-grow 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    transform: scaleX(0);
+  }
+  @keyframes bar-grow {
+    from { transform: scaleX(0); }
+    to { transform: scaleX(1); }
+  }
+  .bar-val {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--gold);
+    width: 100px;
+    text-align: right;
+  }
+
+  /* INVESTORS */
+  .investors { background: rgba(201,168,76,0.03); }
+  .investor-logos {
+    display: flex;
+    gap: 60px;
+    align-items: center;
+    margin-top: 60px;
+    flex-wrap: wrap;
+  }
+  .inv-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: rgba(245,240,232,0.2);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    transition: color 0.3s;
+  }
+  .inv-logo:hover { color: rgba(245,240,232,0.6); }
+
+  /* CTA FINAL */
+  .final-cta {
+    text-align: center;
+    padding: 160px 60px;
+    position: relative;
+    overflow: hidden;
+  }
+  .final-cta::before {
+    content: 'VANTA';
+    position: absolute;
+    font-family: 'Playfair Display', serif;
+    font-size: 320px;
+    font-weight: 900;
+    color: rgba(201,168,76,0.04);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    letter-spacing: -10px;
+    white-space: nowrap;
+  }
+  .final-cta h2 {
+    font-size: clamp(42px, 6vw, 80px);
+    margin-bottom: 24px;
+    position: relative;
+  }
+  .final-cta p {
+    font-size: 16px;
+    color: rgba(245,240,232,0.5);
+    max-width: 480px;
+    margin: 0 auto 48px;
+    line-height: 1.8;
+    position: relative;
+  }
+  .final-actions {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    position: relative;
+  }
+
+  /* Footer */
+  footer {
+    border-top: 1px solid rgba(245,240,232,0.06);
+    padding: 40px 60px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .footer-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 6px;
+    color: var(--gold);
+  }
+  .footer-copy {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+  }
+
+  /* Scroll animations */
+  .reveal {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Separator */
+  .gold-line {
+    width: 60px;
+    height: 2px;
+    background: var(--gold);
+    margin: 40px 0;
+  }
+
+  @media (max-width: 768px) {
+    nav { padding: 20px 24px; }
+    .nav-links { display: none; }
+    .hero { padding: 100px 24px 60px; }
+    .hero-stats { position: relative; bottom: auto; right: auto; flex-wrap: wrap; gap: 30px; margin-top: 60px; }
+    .stat-item { text-align: left; }
+    .section { padding: 80px 24px; }
+    .problem-grid { grid-template-columns: 1fr; }
+    .solution-layout { grid-template-columns: 1fr; }
+    .solution-visual { display: none; }
+    .market-numbers { grid-template-columns: 1fr; }
+    .team-grid { grid-template-columns: 1fr 1fr; }
+    footer { flex-direction: column; gap: 16px; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<nav>
+  <div class="nav-logo">VANTA</div>
+  <div class="nav-links">
+    <a href="#problem">Problem</a>
+    <a href="#solution">Solution</a>
+    <a href="#market">Market</a>
+    <a href="#team">Team</a>
+  </div>
+  <a href="#contact" class="nav-cta">Request Access</a>
+</nav>
+
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-orb"></div>
+
+  <div class="hero-tag">Series A · Health Infrastructure · 2025</div>
+  
+  <h1>The <em>operating system</em> for human longevity</h1>
+
+  <p class="hero-sub">VANTA is the first unified data infrastructure layer that connects clinical biomarkers, genomics, and lifestyle data—enabling precision health interventions at population scale.</p>
+
+  <div class="hero-actions">
+    <a href="#solution" class="btn-primary"><span>See the Platform</span></a>
+    <a href="#market" class="btn-ghost">View Deck</a>
+  </div>
+
+  <div class="hero-stats">
+    <div class="stat-item">
+      <span class="stat-num">$3.2T</span>
+      <span class="stat-label">Market Size</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-num">47M</span>
+      <span class="stat-label">Addressable Users</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-num">340%</span>
+      <span class="stat-label">YoY Growth</span>
+    </div>
+  </div>
+</section>
+
+<div class="ticker">
+  <div class="ticker-track" id="ticker">
+    <div class="ticker-item"><span class="dot"></span>Precision Medicine</div>
+    <div class="ticker-item"><span class="dot"></span>Biomarker Intelligence</div>
+    <div class="ticker-item"><span class="dot"></span>Longitudinal Health Data</div>
+    <div class="ticker-item"><span class="dot"></span>Clinical AI Integration</div>
+    <div class="ticker-item"><span class="dot"></span>Genomic Infrastructure</div>
+    <div class="ticker-item"><span class="dot"></span>Population Health Analytics</div>
+    <div class="ticker-item"><span class="dot"></span>Series A · $28M Raised</div>
+    <div class="ticker-item"><span class="dot"></span>Precision Medicine</div>
+    <div class="ticker-item"><span class="dot"></span>Biomarker Intelligence</div>
+    <div class="ticker-item"><span class="dot"></span>Longitudinal Health Data</div>
+    <div class="ticker-item"><span class="dot"></span>Clinical AI Integration</div>
+    <div class="ticker-item"><span class="dot"></span>Genomic Infrastructure</div>
+    <div class="ticker-item"><span class="dot"></span>Population Health Analytics</div>
+    <div class="ticker-item"><span class="dot"></span>Series A · $28M Raised</div>
+  </div>
+</div>
+
+<!-- PROBLEM -->
+<section class="section" id="problem">
+  <div class="section-label">The Problem</div>
+  <h2>Healthcare data is broken.<br><em>Entirely.</em></h2>
+  <p style="max-width:560px; color: rgba(245,240,232,0.55); font-size:16px; line-height:1.8;">
+    Trillions of health data points are generated annually. None of them talk to each other. Clinicians make decisions on 3% of the available signal. We are leaving decades of healthy life on the table.
+  </p>
+  
+  <div class="problem-grid reveal">
+    <div class="problem-card">
+      <div class="problem-num">01</div>
+      <h3>Data lives in 47 silos</h3>
+      <p>The average patient's health data is fragmented across EHRs, labs, wearables, genomics providers, and insurance systems that cannot communicate. Integration attempts fail 89% of the time.</p>
+    </div>
+    <div class="problem-card">
+      <div class="problem-num">02</div>
+      <h3>Interventions arrive too late</h3>
+      <p>Chronic disease is diagnosed an average of 6.2 years after the biological signal first appears in data. VANTA's longitudinal engine detects these signals years before clinical presentation.</p>
+    </div>
+    <div class="problem-card">
+      <div class="problem-num">03</div>
+      <h3>No unified identity layer</h3>
+      <p>There is no universal health identity that persists across providers, time, and geography. Every care transition loses critical context. We built the identity primitive the industry is missing.</p>
+    </div>
+    <div class="problem-card">
+      <div class="problem-num">04</div>
+      <h3>AI can't generalize</h3>
+      <p>Health AI models trained on single-institution data fail catastrophically when deployed at scale. Without diverse, longitudinal, multi-modal training data, clinical AI is an expensive parlor trick.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SOLUTION -->
+<section class="section solution" id="solution">
+  <div class="section-label" style="color:var(--red)">The Platform</div>
+  <h2 style="color:var(--black)">One layer to unite<br><em style="color:var(--red)">all of it</em></h2>
+  <p style="max-width:520px; color:rgba(8,8,8,0.55); font-size:16px; line-height:1.8">
+    VANTA is the middleware layer that sits between every health data source and every clinical decision. We are the Stripe of health infrastructure—invisible, essential, and ludicrously defensible.
+  </p>
+
+  <div class="solution-layout reveal">
+    <div class="solution-visual">
+      <div class="ring ring-1"></div>
+      <div class="ring ring-2"></div>
+      <div class="ring ring-3"></div>
+      <div class="ring-center">
+        <span>VANTA<br>CORE</span>
+      </div>
+    </div>
+
+    <div class="solution-features">
+      <div class="feature-item">
+        <div class="feature-icon">⚡</div>
+        <div>
+          <h4>Universal Health Graph</h4>
+          <p>A real-time, privacy-preserving knowledge graph that unifies clinical, genomic, environmental, and behavioral data into a single longitudinal patient record.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">🧬</div>
+        <div>
+          <h4>Biomarker Intelligence Engine</h4>
+          <p>Trained on 2.4B longitudinal data points, our foundation model detects early disease signals with 94.2% sensitivity across 340 chronic conditions.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">🔐</div>
+        <div>
+          <h4>Zero-Knowledge Identity</h4>
+          <p>A cryptographic health identity that enables data sharing and model training without exposing raw PHI. HIPAA-compliant by architecture, not by policy.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">🔌</div>
+        <div>
+          <h4>API-First Integration</h4>
+          <p>Connect any EHR, lab, wearable, or genomics provider in under 4 hours using VANTA's 340+ pre-built integrations and FHIR-native data model.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MARKET -->
+<section class="section" id="market">
+  <div class="section-label">The Opportunity</div>
+  <h2>A $3.2 trillion market<br>with <em>no incumbent</em></h2>
+  <p style="max-width:520px; color:rgba(245,240,232,0.55); font-size:16px; line-height:1.8">
+    The digital health infrastructure market is undergoing a once-in-a-generation platform shift. The company that owns the data layer owns everything that runs on top of it.
+  </p>
+
+  <div class="market-numbers reveal">
+    <div class="market-card">
+      <span class="market-val">$3.2T</span>
+      <div class="market-label">Total Addressable Market</div>
+      <p class="market-desc">Global digital health infrastructure, precision medicine, and clinical AI combined market by 2030.</p>
+    </div>
+    <div class="market-card">
+      <span class="market-val">$340B</span>
+      <div class="market-label">Serviceable Market (SAM)</div>
+      <p class="market-desc">Health data interoperability, EHR integration services, and population health analytics in developed markets.</p>
+    </div>
+    <div class="market-card">
+      <span class="market-val">$18B</span>
+      <div class="market-label">3-Year Capture Target</div>
+      <p class="market-desc">Year 5 ARR target based on 1,200 enterprise health system contracts at $15M average TCV.</p>
+    </div>
+  </div>
+
+  <div class="traction-bar-wrap reveal" style="margin-top:100px">
+    <div class="section-label">Traction</div>
+    <div style="height:20px"></div>
+    <div class="bar-row">
+      <div class="bar-label">ARR (Current)</div>
+      <div class="bar-outer"><div class="bar-inner" style="animation-delay:0.1s; width:28%"></div></div>
+      <div class="bar-val">$28M</div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-label">Enterprise Clients</div>
+      <div class="bar-outer"><div class="bar-inner" style="animation-delay:0.2s; width:40%"></div></div>
+      <div class="bar-val">84</div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-label">Patients on Platform</div>
+      <div class="bar-outer"><div class="bar-inner" style="animation-delay:0.3s; width:65%"></div></div>
+      <div class="bar-val">4.2M</div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-label">Net Revenue Retention</div>
+      <div class="bar-outer"><div class="bar-inner" style="animation-delay:0.4s; width:87%"></div></div>
+      <div class="bar-val">187%</div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-label">Gross Margin</div>
+      <div class="bar-outer"><div class="bar-inner" style="animation-delay:0.5s; width:72%"></div></div>
+      <div class="bar-val">72%</div>
+    </div>
+  </div>
+</section>
+
+<!-- TEAM -->
+<section class="section" id="team">
+  <div class="section-label">The Team</div>
+  <h2>Built by people who<br><em>lived the problem</em></h2>
+
+  <div class="team-grid reveal">
+    <div class="team-card">
+      <div class="team-avatar">S</div>
+      <div class="team-name">Dr. Sofia Ramos</div>
+      <div class="team-role">CEO & Co-Founder</div>
+      <div class="team-bio">Former Chief Data Officer at Mayo Clinic. MD/PhD Stanford. Led the first federated learning initiative across 40 U.S. health systems.</div>
+    </div>
+    <div class="team-card">
+      <div class="team-avatar">J</div>
+      <div class="team-name">James Okafor</div>
+      <div class="team-role">CTO & Co-Founder</div>
+      <div class="team-bio">Ex-Google Brain. Architected health data pipelines processing 8TB/day at scale. 14 patents in privacy-preserving ML and FHIR infrastructure.</div>
+    </div>
+    <div class="team-card">
+      <div class="team-avatar">L</div>
+      <div class="team-name">Dr. Lin Wei</div>
+      <div class="team-role">Chief Science Officer</div>
+      <div class="team-bio">Led biomarker research at Broad Institute for 11 years. 80+ peer-reviewed publications. Nature Medicine cover, 2022.</div>
+    </div>
+    <div class="team-card">
+      <div class="team-avatar">M</div>
+      <div class="team-name">Marcus Thiele</div>
+      <div class="team-role">Chief Revenue Officer</div>
+      <div class="team-bio">Previously VP Sales at Epic Systems. Closed $2B+ in enterprise health contracts. Built and scaled sales orgs from 0 to 200 across two exits.</div>
+    </div>
+  </div>
+</section>
+
+<!-- INVESTORS -->
+<section class="section investors reveal">
+  <div class="section-label">Backed By</div>
+  <h2>Trusted by the<br><em>best in the world</em></h2>
+  <div class="investor-logos">
+    <div class="inv-logo">Sequoia</div>
+    <div class="inv-logo">a16z Bio</div>
+    <div class="inv-logo">GV</div>
+    <div class="inv-logo">Bessemer</div>
+    <div class="inv-logo">General Catalyst</div>
+  </div>
+  <div class="gold-line"></div>
+  <p style="color:rgba(245,240,232,0.4); font-size:15px; max-width:600px; line-height:1.8">
+    "VANTA is building the infrastructure layer that the entire health system has been waiting for. This is the company that makes clinical AI finally work."
+  </p>
+  <p style="font-family:'DM Mono',monospace; font-size:11px; letter-spacing:2px; color:var(--gold); margin-top:16px; text-transform:uppercase">
+    — Managing Partner, Sequoia Capital
+  </p>
+</section>
+
+<!-- FINAL CTA -->
+<section class="final-cta" id="contact">
+  <h2>The future of health<br>infrastructure <em>is inevitable.</em></h2>
+  <p>We are raising our Series B. We are selective. If you believe in the mission, let's talk.</p>
+  <div class="final-actions">
+    <a href="mailto:invest@vanta.health" class="btn-primary"><span>Request Investment Deck</span></a>
+    <a href="#" class="btn-ghost" style="color:var(--text-dim)">Book a Demo</a>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-logo">VANTA</div>
+  <div class="footer-copy">© 2025 Vanta Health Inc. · All rights reserved · San Francisco, CA</div>
+  <div class="footer-copy">invest@vanta.health</div>
+</footer>
+
+<script>
+  // Custom cursor
+  const cursor = document.getElementById('cursor');
+  const ring = document.getElementById('cursorRing');
+  let mx = 0, my = 0, rx = 0, ry = 0;
+  document.addEventListener('mousemove', e => {
+    mx = e.clientX; my = e.clientY;
+    cursor.style.left = mx + 'px';
+    cursor.style.top = my + 'px';
+  });
+  function animateRing() {
+    rx += (mx - rx) * 0.12;
+    ry += (my - ry) * 0.12;
+    ring.style.left = rx + 'px';
+    ring.style.top = ry + 'px';
+    requestAnimationFrame(animateRing);
+  }
+  animateRing();
+
+  // Reveal on scroll
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.15 });
+  reveals.forEach(r => observer.observe(r));
+
+  // Nav active states
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      const target = document.querySelector(a.getAttribute('href'));
+      if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth' }); }
+    });
+  });
+</script>
+</body>
+</html>
